@@ -14,7 +14,7 @@ run "plano_padrao" {
   command = plan
 
   variables {
-    api_origin_domain = "api.sa-east-1.elb.amazonaws.com"
+    api_origin_domain = "api.us-east-2.elb.amazonaws.com"
   }
 
   assert {

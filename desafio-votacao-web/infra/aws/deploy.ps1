@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$ApiOriginDomain,
-    [string]$Region = "sa-east-1",
+    [string]$Region = "us-east-2",
     [string]$Environment = "demo"
 )
 

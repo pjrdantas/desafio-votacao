@@ -127,20 +127,6 @@ src/app/
 - `pautas`: listagem, detalhe, sessão, voto e resultado.
 - `shared`: componentes reutilizáveis.
 
-## Implantação de demonstração no Render
-
-O Blueprint `infra/render/render.yaml` publica o Dockerfile como Web Service Free. O Nginx serve o Angular na porta informada pelo Render e encaminha `/api` por HTTPS para o backend. Cookies e chamadas HTTP permanecem na origem pública do frontend, sem configuração de CORS no navegador.
-
-1. Implante primeiro o Blueprint do backend, no mesmo workspace do Render, com o nome `desafio-votacao-service`.
-2. No [Render Dashboard](https://dashboard.render.com), crie um Blueprint conectado ao repositório e informe `desafio-votacao-web/infra/render/render.yaml` em **Blueprint Path**.
-3. Confirme o plano **Free**. O campo `API_HOST` referencia automaticamente `RENDER_EXTERNAL_HOSTNAME` do backend.
-4. Aguarde o deploy e abra a URL pública de `desafio-votacao-web`.
-5. Valide cadastro, login, votação e a rota `/mobile`. O Swagger está disponível na URL do backend, em `/swagger-ui.html`.
-
-Se este projeto estiver em um repositório separado, use `infra/render/render.yaml` como Blueprint Path e altere `rootDir` para `.`. Para uma API com outro nome, ajuste `envVars.API_HOST.fromService.name` no Blueprint.
-
-Os dois Web Services Free compartilham 750 horas mensais e entram em repouso após 15 minutos sem acesso. Antes da avaliação, abra o readiness da API e aguarde a resposta `UP`; depois abra o frontend. O primeiro acesso pode demorar cerca de um minuto por serviço. Os limites atuais estão na [documentação do Render](https://render.com/docs/free).
-
 ## Implantação na AWS
 
 A infraestrutura em `infra/aws` cria um bucket S3 privado, uma distribuição CloudFront e um AWS WAF com rate limit global para os endpoints de autenticação. O conteúdo Angular é servido por HTTPS e os caminhos `/api`, `/swagger-ui`, `/v3/api-docs` e `/actuator/health` são encaminhados ao ALB do backend. Assim, frontend, cookies e API usam a mesma origem pública.

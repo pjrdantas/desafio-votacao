@@ -41,20 +41,6 @@ docker compose down
 
 Consulte o README de cada projeto para instalação, configuração, testes e execução sem Docker.
 
-## Implantação de demonstração no Render
-
-Os projetos possuem Blueprints separados para publicar a aplicação com planos Free:
-
-1. Publique as alterações no repositório Git.
-2. No [Render Dashboard](https://dashboard.render.com), conecte o repositório e crie um Blueprint com o caminho `desafio-votacao-service/infra/render/render.yaml`.
-3. Aguarde o backend e o PostgreSQL ficarem disponíveis. Abra `/actuator/health/readiness` na URL pública da API e confirme a resposta `UP`.
-4. Crie outro Blueprint com o caminho `desafio-votacao-web/infra/render/render.yaml`. Ele obtém automaticamente o hostname público do backend existente.
-5. Abra a URL HTTPS do serviço `desafio-votacao-web` e realize cadastro, login, criação de pauta, abertura de sessão, voto e consulta do resultado.
-
-O frontend é servido por Nginx e encaminha `/api` para a API por HTTPS. O navegador utiliza uma única origem para os cookies e as chamadas da aplicação. O PostgreSQL aceita conexões somente pela rede interna do Render. Os arquivos estão configurados para este monorepositório; ao publicar cada pasta em um repositório próprio, altere `rootDir` para `.` no respectivo Blueprint.
-
-O plano Free é temporário: os serviços entram em repouso após 15 minutos sem acesso e podem levar cerca de um minuto para voltar; os dois serviços compartilham 750 horas gratuitas por mês. O PostgreSQL gratuito expira em 30 dias e não possui backups. Antes da avaliação, abra a API e o frontend e aguarde ambos estarem prontos. Consulte os [limites oficiais do Render](https://render.com/docs/free).
-
 ## Implantação na AWS
 
 A opção AWS utiliza serviços gerenciados e mantém os projetos independentes:

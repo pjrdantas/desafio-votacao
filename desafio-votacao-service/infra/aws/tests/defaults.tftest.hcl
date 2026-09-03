@@ -1,7 +1,7 @@
 mock_provider "aws" {
   mock_data "aws_availability_zones" {
     defaults = {
-      names = ["sa-east-1a", "sa-east-1b"]
+      names = ["us-east-2a", "us-east-2b"]
     }
   }
 
@@ -9,7 +9,7 @@ mock_provider "aws" {
     defaults = {
       address = "database.internal"
       master_user_secret = [{
-        secret_arn = "arn:aws:secretsmanager:sa-east-1:123456789012:secret:database"
+        secret_arn = "arn:aws:secretsmanager:us-east-2:123456789012:secret:database"
       }]
     }
   }

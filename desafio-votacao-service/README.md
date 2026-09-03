@@ -221,24 +221,6 @@ aws logs tail $logs --since 30m --follow
 
 Verifique no CloudWatch a CPU e a memória do ECS, targets indisponíveis do ALB e conexões, armazenamento e CPU do RDS. Cada publicação registra uma revisão ECS apontando para a imagem identificada pelo SHA do commit; em caso de regressão, selecione uma revisão anterior da mesma família e atualize o serviço.
 
-## Implantação de demonstração no Render
-
-O Blueprint `infra/render/render.yaml` cria uma API Docker Free e um PostgreSQL 17 Free na região Virginia. As credenciais são vinculadas pelo Render, sem valores secretos no repositório. A API utiliza a porta 10000, readiness com consulta ao banco, cookies seguros, perfil `cloud` com logs JSON e `CPF_FAKE_MODO=apto` para uma demonstração determinística.
-
-1. Publique o código no Git e conecte o repositório ao [Render Dashboard](https://dashboard.render.com).
-2. Crie um Blueprint e informe `desafio-votacao-service/infra/render/render.yaml` no campo **Blueprint Path**.
-3. Confirme que API e banco estão no plano **Free** e crie os recursos.
-4. Aguarde o deploy e confira `/actuator/health/readiness` e `/swagger-ui.html` na URL pública do backend.
-5. Crie o Blueprint do frontend seguindo o README de `desafio-votacao-web`.
-
-Quando este projeto estiver em um repositório separado, use `infra/render/render.yaml` como Blueprint Path e altere `rootDir` para `.`. O nome `desafio-votacao-service` é utilizado pela configuração do frontend para localizar a API.
-
-O banco bloqueia conexões externas com `ipAllowList: []`. O endpoint do contrato mobile usa a URL pública atribuída ao backend. O Nginx do frontend encaminha as chamadas da interface pela mesma origem do navegador.
-
-No plano Free, o disco da API é efêmero: a chave JWT em `/tmp` é recriada após reinícios e tokens de acesso anteriores deixam de ser válidos. Contas, sessões, pautas e votos ficam no PostgreSQL. O banco gratuito expira em 30 dias e não tem backups; use este ambiente somente para a avaliação. Consulte os [limites do plano Free](https://render.com/docs/free).
-
-Para investigar falhas, confira o health check e procure o `X-Correlation-ID` em **Logs** do serviço. Antes da apresentação, abra `/actuator/health/readiness` e aguarde `UP`, pois o serviço gratuito entra em repouso por inatividade.
-
 ## Implantação na AWS
 
 A infraestrutura em `infra/aws` utiliza Terraform e cria:

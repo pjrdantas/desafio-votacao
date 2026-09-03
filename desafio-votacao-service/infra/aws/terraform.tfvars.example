@@ -1,4 +1,4 @@
-aws_region  = "sa-east-1"
+aws_region  = "us-east-2"
 environment = "demo"
 
 # Use "apto" para uma demonstração determinística.
@@ -9,7 +9,7 @@ cpf_fake_mode = "apto"
 
 # Opcional: exportação direta de métricas para Dynatrace.
 # dynatrace_metrics_uri          = "https://SEU-AMBIENTE.live.dynatrace.com/api/v2/metrics/ingest"
-# dynatrace_api_token_secret_arn = "arn:aws:secretsmanager:sa-east-1:123456789012:secret:dynatrace-token"
+# dynatrace_api_token_secret_arn = "arn:aws:secretsmanager:us-east-2:123456789012:secret:dynatrace-token"
 
 # Para ambiente permanente:
 # database_multi_az = true

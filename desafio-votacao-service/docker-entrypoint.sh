@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-# O Render fornece uma URI PostgreSQL. O driver JDBC recebe o endpoint com
+# Algumas plataformas fornecem uma URI PostgreSQL. O driver JDBC recebe o
 # prefixo jdbc: e as credenciais em variáveis separadas.
 if [ -n "${DATABASE_URL:-}" ] && [ -z "${DB_URL:-}" ]; then
     case "$DATABASE_URL" in
@@ -15,10 +15,6 @@ if [ -n "${DATABASE_URL:-}" ] && [ -z "${DB_URL:-}" ]; then
             exit 1
             ;;
     esac
-fi
-
-if [ -n "${RENDER_EXTERNAL_URL:-}" ] && [ -z "${MOBILE_BASE_URL:-}" ]; then
-    export MOBILE_BASE_URL="$RENDER_EXTERNAL_URL"
 fi
 
 if [ "$#" -gt 0 ]; then
