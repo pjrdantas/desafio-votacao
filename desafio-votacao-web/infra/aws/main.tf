@@ -368,7 +368,7 @@ resource "aws_lambda_function" "web" {
   source_code_hash               = data.archive_file.lambda_web[0].output_base64sha256
   memory_size                    = 256
   timeout                        = 29
-  reserved_concurrent_executions = 5
+  reserved_concurrent_executions = -1
 
   environment {
     variables = {

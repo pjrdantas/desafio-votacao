@@ -76,7 +76,7 @@ run "fallback_lambda_url" {
   }
 
   assert {
-    condition     = aws_lambda_function.web[0].reserved_concurrent_executions == 5
-    error_message = "O fallback deve preservar cinco execuções livres na cota inicial da conta."
+    condition     = aws_lambda_function.web[0].reserved_concurrent_executions == -1
+    error_message = "O fallback deve compartilhar a cota reduzida da conta gratuita."
   }
 }
