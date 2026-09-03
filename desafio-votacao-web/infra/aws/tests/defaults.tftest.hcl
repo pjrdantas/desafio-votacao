@@ -27,6 +27,14 @@ run "plano_padrao" {
   }
 
   assert {
+    condition = (
+      !aws_cloudfront_cache_policy.api.parameters_in_cache_key_and_forwarded_to_origin[0].enable_accept_encoding_brotli &&
+      !aws_cloudfront_cache_policy.api.parameters_in_cache_key_and_forwarded_to_origin[0].enable_accept_encoding_gzip
+    )
+    error_message = "A política sem cache da API não pode habilitar codificação na chave."
+  }
+
+  assert {
     condition     = aws_cloudfront_distribution.web.viewer_certificate[0].minimum_protocol_version == "TLSv1.2_2021"
     error_message = "O CloudFront deve exigir TLS moderno."
   }
