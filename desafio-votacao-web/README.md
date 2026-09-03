@@ -69,7 +69,9 @@ Variáveis aceitas pelo Compose:
 | Variável | Valor padrão | Descrição |
 | --- | --- | --- |
 | `WEB_PORT` | `4200` | Porta publicada pelo Nginx |
-| `API_UPSTREAM` | `host.docker.internal:8080` | Destino da API sem protocolo |
+| `API_SCHEME` | `http` | Protocolo da API: `http` ou `https` |
+| `API_HOST` | `host.docker.internal` | Hostname da API |
+| `API_PORT` | `8080` | Porta da API |
 
 Para encerrar:
 
@@ -124,6 +126,42 @@ src/app/
 - `mobile`: renderizador do contrato mobile.
 - `pautas`: listagem, detalhe, sessão, voto e resultado.
 - `shared`: componentes reutilizáveis.
+
+## Implantação de demonstração no Render
+
+O Blueprint `infra/render/render.yaml` publica o Dockerfile como Web Service Free. O Nginx serve o Angular na porta informada pelo Render e encaminha `/api` por HTTPS para o backend. Cookies e chamadas HTTP permanecem na origem pública do frontend, sem configuração de CORS no navegador.
+
+1. Implante primeiro o Blueprint do backend, no mesmo workspace do Render, com o nome `desafio-votacao-service`.
+2. No [Render Dashboard](https://dashboard.render.com), crie um Blueprint conectado ao repositório e informe `desafio-votacao-web/infra/render/render.yaml` em **Blueprint Path**.
+3. Confirme o plano **Free**. O campo `API_HOST` referencia automaticamente `RENDER_EXTERNAL_HOSTNAME` do backend.
+4. Aguarde o deploy e abra a URL pública de `desafio-votacao-web`.
+5. Valide cadastro, login, votação e a rota `/mobile`. O Swagger está disponível na URL do backend, em `/swagger-ui.html`.
+
+Se este projeto estiver em um repositório separado, use `infra/render/render.yaml` como Blueprint Path e altere `rootDir` para `.`. Para uma API com outro nome, ajuste `envVars.API_HOST.fromService.name` no Blueprint.
+
+Os dois Web Services Free compartilham 750 horas mensais e entram em repouso após 15 minutos sem acesso. Antes da avaliação, abra o readiness da API e aguarde a resposta `UP`; depois abra o frontend. O primeiro acesso pode demorar cerca de um minuto por serviço. Os limites atuais estão na [documentação do Render](https://render.com/docs/free).
+
+## Implantação na AWS
+
+A infraestrutura em `infra/aws` cria um bucket S3 privado, uma distribuição CloudFront e um AWS WAF com rate limit global para os endpoints de autenticação. O conteúdo Angular é servido por HTTPS e os caminhos `/api`, `/swagger-ui`, `/v3/api-docs` e `/actuator/health` são encaminhados ao ALB do backend. Assim, frontend, cookies e API usam a mesma origem pública.
+
+Depois de implantar o backend, use o output `api_origin_domain`:
+
+```powershell
+cd infra/aws
+Copy-Item terraform.tfvars.example terraform.tfvars
+.\deploy.ps1 -ApiOriginDomain "DOMINIO_DO_ALB"
+```
+
+O script instala as dependências, testa, gera o build, aplica o Terraform, sincroniza o S3 e invalida o cache. O output `application_url` é o endereço público da aplicação. Depois, atualize `public_base_url` no Terraform do backend com essa URL para que os callbacks do contrato mobile também usem HTTPS.
+
+Para remover os recursos:
+
+```powershell
+terraform destroy -var="api_origin_domain=DOMINIO_DO_ALB"
+```
+
+O workflow `.github/workflows/deploy-aws.yml` publica um novo build mediante acionamento manual. Configure `AWS_ROLE_ARN`, `AWS_REGION`, `WEB_BUCKET` e `CLOUDFRONT_DISTRIBUTION` como variáveis do repositório. A autenticação com a AWS usa OIDC.
 
 ## Licença
 

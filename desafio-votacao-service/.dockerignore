@@ -1,6 +1,7 @@
 # Arquivos necessários para construir a aplicação
 **
 !Dockerfile
+!docker-entrypoint.sh
 !pom.xml
 !src/
 !src/**

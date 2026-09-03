@@ -1,0 +1,6 @@
+aws_region       = "sa-east-1"
+environment      = "demo"
+api_origin_domain = "desafio-votacao-demo-api-000000000.sa-east-1.elb.amazonaws.com"
+
+# PriceClass_All utiliza também pontos de presença no Brasil.
+price_class = "PriceClass_All"

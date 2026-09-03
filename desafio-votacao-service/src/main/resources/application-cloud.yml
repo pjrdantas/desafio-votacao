@@ -1,0 +1,11 @@
+spring:
+  main:
+    banner-mode: off
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        application: ${spring.application.name}
+        environment: ${APP_ENV:cloud}

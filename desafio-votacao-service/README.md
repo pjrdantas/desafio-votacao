@@ -138,6 +138,7 @@ Use `apto` para fluxos locais determinísticos.
 | Variável | Valor padrão |
 | --- | --- |
 | `DB_URL` | `jdbc:postgresql://localhost:5433/votacao` |
+| `DATABASE_URL` | Opcional; URI PostgreSQL convertida pelo entrypoint Docker |
 | `DB_USERNAME` | `votacao` |
 | `DB_PASSWORD` | `votacao` |
 | `DB_POOL_SIZE` | `10` |
@@ -151,7 +152,7 @@ Use `apto` para fluxos locais determinísticos.
 | `AUTH_RATE_LIMIT` | `120` |
 | `CPF_FAKE_MODO` | `aleatorio` |
 
-As opções podem ser definidas no ambiente ou na configuração de execução do Eclipse. O Spring Boot utiliza `src/main/resources/application.yml`.
+As opções podem ser definidas no ambiente ou na configuração de execução do Eclipse. O Spring Boot utiliza `src/main/resources/application.yml`. No Docker, `DATABASE_URL` pode fornecer o endpoint PostgreSQL; informe também `DB_USERNAME` e `DB_PASSWORD`. `DB_URL` tem precedência quando definido.
 
 ## Swagger e monitoramento
 
@@ -205,6 +206,71 @@ src/main/java/br/com/sicredi/desafiovotacao/
 ```
 
 O domínio e os casos de uso não dependem de HTTP, JDBC ou Spring Security. Os adaptadores implementam persistência, segurança, observabilidade e transporte HTTP.
+
+## Operação e investigação de incidentes
+
+Toda resposta da API contém `X-Correlation-ID`; o mesmo identificador é incluído nos logs. No ambiente AWS, comece a investigação pelo health check e pelos eventos do serviço:
+
+```powershell
+$cluster = terraform -chdir=infra/aws output -raw ecs_cluster_name
+$service = terraform -chdir=infra/aws output -raw ecs_service_name
+$logs = terraform -chdir=infra/aws output -raw cloudwatch_log_group
+aws ecs describe-services --cluster $cluster --services $service --query "services[0].events[0:10]"
+aws logs tail $logs --since 30m --follow
+```
+
+Verifique no CloudWatch a CPU e a memória do ECS, targets indisponíveis do ALB e conexões, armazenamento e CPU do RDS. Cada publicação registra uma revisão ECS apontando para a imagem identificada pelo SHA do commit; em caso de regressão, selecione uma revisão anterior da mesma família e atualize o serviço.
+
+## Implantação de demonstração no Render
+
+O Blueprint `infra/render/render.yaml` cria uma API Docker Free e um PostgreSQL 17 Free na região Virginia. As credenciais são vinculadas pelo Render, sem valores secretos no repositório. A API utiliza a porta 10000, readiness com consulta ao banco, cookies seguros, perfil `cloud` com logs JSON e `CPF_FAKE_MODO=apto` para uma demonstração determinística.
+
+1. Publique o código no Git e conecte o repositório ao [Render Dashboard](https://dashboard.render.com).
+2. Crie um Blueprint e informe `desafio-votacao-service/infra/render/render.yaml` no campo **Blueprint Path**.
+3. Confirme que API e banco estão no plano **Free** e crie os recursos.
+4. Aguarde o deploy e confira `/actuator/health/readiness` e `/swagger-ui.html` na URL pública do backend.
+5. Crie o Blueprint do frontend seguindo o README de `desafio-votacao-web`.
+
+Quando este projeto estiver em um repositório separado, use `infra/render/render.yaml` como Blueprint Path e altere `rootDir` para `.`. O nome `desafio-votacao-service` é utilizado pela configuração do frontend para localizar a API.
+
+O banco bloqueia conexões externas com `ipAllowList: []`. O endpoint do contrato mobile usa a URL pública atribuída ao backend. O Nginx do frontend encaminha as chamadas da interface pela mesma origem do navegador.
+
+No plano Free, o disco da API é efêmero: a chave JWT em `/tmp` é recriada após reinícios e tokens de acesso anteriores deixam de ser válidos. Contas, sessões, pautas e votos ficam no PostgreSQL. O banco gratuito expira em 30 dias e não tem backups; use este ambiente somente para a avaliação. Consulte os [limites do plano Free](https://render.com/docs/free).
+
+Para investigar falhas, confira o health check e procure o `X-Correlation-ID` em **Logs** do serviço. Antes da apresentação, abra `/actuator/health/readiness` e aguarde `UP`, pois o serviço gratuito entra em repouso por inatividade.
+
+## Implantação na AWS
+
+A infraestrutura em `infra/aws` utiliza Terraform e cria:
+
+- repositório ECR com varredura de imagens;
+- API no ECS Fargate, atrás de um Application Load Balancer;
+- PostgreSQL 17 privado no RDS, com credencial gerenciada pelo Secrets Manager;
+- EFS criptografado para compartilhar e preservar a chave de assinatura JWT;
+- logs e alarme de targets indisponíveis no CloudWatch;
+- autoscaling da API entre uma e três tarefas.
+
+Requisitos adicionais: AWS CLI autenticada, Terraform 1.7 ou superior e Docker em execução. A implantação inicial cria primeiro o ECR, publica a imagem e então provisiona o restante:
+
+```powershell
+cd infra/aws
+Copy-Item terraform.tfvars.example terraform.tfvars
+.\deploy.ps1
+```
+
+O Terraform mostra o plano antes de cada aplicação. Ao final, copie o output `api_origin_domain`; ele será usado na implantação do frontend. O ALB aceita tráfego do CloudFront por padrão. Para um diagnóstico direto e temporário, informe seu IP em `api_allowed_cidrs`.
+
+O ambiente de demonstração evita o custo de um NAT Gateway: as tarefas recebem IP público, mas aceitam entrada somente do ALB; o ALB, por sua vez, aceita as origens do CloudFront. PostgreSQL e EFS permanecem em sub-redes sem rota pública. Em um ambiente permanente, use sub-redes privadas com VPC endpoints ou NAT, TLS também entre CloudFront e ALB, `database_multi_az=true`, `protect_data=true` e estado remoto criptografado do Terraform.
+
+Para remover os recursos de demonstração:
+
+```powershell
+terraform destroy
+```
+
+O workflow `.github/workflows/deploy-aws.yml` executa testes, publica uma imagem identificada pelo commit e atualiza o ECS mediante acionamento manual. Configure no repositório as variáveis `AWS_ROLE_ARN`, `AWS_REGION`, `ECR_REPOSITORY_URL`, `ECS_CLUSTER`, `ECS_SERVICE` e `ECS_TASK_FAMILY`. A autenticação usa OIDC e dispensa chaves AWS permanentes no GitHub.
+
+Para habilitar o Dynatrace, grave o token `metrics.ingest` no Secrets Manager e preencha `dynatrace_metrics_uri` e `dynatrace_api_token_secret_arn` no `terraform.tfvars`.
 
 ## Licença
 

@@ -9,14 +9,16 @@ COPY src ./src
 RUN mvn -B -ntp -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
-RUN addgroup -S votacao && adduser -S votacao -G votacao
+RUN addgroup -g 10001 -S votacao && adduser -u 10001 -S votacao -G votacao
 WORKDIR /app
-RUN mkdir -p /app/keys && chown votacao:votacao /app/keys
-ENV JWT_KEY_STORE_PATH=/app/keys/jwt.jwk
+RUN mkdir -p /app/keys && chown -R votacao:votacao /app
+
 COPY --from=build --chown=votacao:votacao /workspace/target/desafio-votacao-service-0.0.1-SNAPSHOT.jar app.jar
+COPY --chown=votacao:votacao docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh
 USER votacao
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 FROM runtime AS dynatrace
 COPY --from=oneagent / /
