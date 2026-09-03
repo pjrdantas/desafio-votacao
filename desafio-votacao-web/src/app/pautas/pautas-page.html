@@ -1,0 +1,115 @@
+<header class="page-header">
+  <div class="container header-inner">
+    <a routerLink="/pautas" class="brand" aria-label="Desafio Votação, início"
+      ><span class="brand-mark"><app-icon name="ballot" /></span
+      ><span class="brand-name">Desafio Votação</span></a
+    ><button mat-flat-button (click)="novaPauta()"><app-icon name="plus" />Nova pauta</button>
+  </div>
+</header>
+<main id="conteudo" class="container main-content" tabindex="-1">
+  <div class="page-intro">
+    <h1>Pautas da assembleia</h1>
+    <p>Selecione uma pauta para votar ou acompanhar o resultado.</p>
+  </div>
+  @if (carregando()) {
+    <div class="loading-state" role="status">
+      <mat-spinner diameter="24" /><span>Carregando pautas…</span>
+    </div>
+  } @else if (erro(); as falha) {
+    <app-error-notice
+      title="Não foi possível carregar as pautas"
+      [error]="falha"
+      [retryable]="true"
+      (retry)="carregar()"
+    />
+  } @else if (pautas().length === 0) {
+    <section class="card empty-state">
+      <span class="empty-icon"><app-icon name="list" /></span>
+      <h2>{{ pagina() === 0 ? 'Nenhuma pauta por aqui' : 'Não há mais pautas' }}</h2>
+      <p>
+        {{
+          pagina() === 0
+            ? 'Cadastre a primeira pauta para começar a assembleia.'
+            : 'Volte à página anterior para consultar as pautas disponíveis.'
+        }}
+      </p>
+      @if (pagina() === 0) {
+        <button mat-flat-button (click)="novaPauta()">
+          <app-icon name="plus" />Criar primeira pauta
+        </button>
+      }
+    </section>
+  } @else {
+    <div class="card desktop-pautas">
+      <table mat-table [dataSource]="pautas()" aria-label="Pautas da assembleia">
+        <ng-container matColumnDef="titulo"
+          ><th mat-header-cell *matHeaderCellDef>Título</th>
+          <td mat-cell *matCellDef="let pauta">
+            <span class="table-title">{{ pauta.titulo }}</span>
+          </td></ng-container
+        >
+        <ng-container matColumnDef="descricao"
+          ><th mat-header-cell *matHeaderCellDef>Descrição</th>
+          <td mat-cell *matCellDef="let pauta">
+            <span class="table-description">{{ pauta.descricao || 'Sem descrição' }}</span>
+          </td></ng-container
+        >
+        <ng-container matColumnDef="criadaEm"
+          ><th mat-header-cell *matHeaderCellDef>Criada em</th>
+          <td mat-cell *matCellDef="let pauta">
+            <time [attr.datetime]="pauta.criadaEm">{{ pauta.criadaEm | date: 'dd/MM/yyyy' }}</time>
+          </td></ng-container
+        >
+        <ng-container matColumnDef="acao"
+          ><th mat-header-cell *matHeaderCellDef><span class="sr-only">Ações</span></th>
+          <td mat-cell *matCellDef="let pauta">
+            <a
+              mat-button
+              [routerLink]="['/pautas', pauta.id]"
+              [queryParams]="{ pagina: pagina() }"
+              [attr.aria-label]="'Ver pauta: ' + pauta.titulo"
+              >Ver pauta<app-icon name="next"
+            /></a></td
+        ></ng-container>
+        <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+        <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+      </table>
+    </div>
+    <div class="mobile-pautas">
+      @for (pauta of pautas(); track pauta.id) {
+        <article class="card pauta-card">
+          <h2>{{ pauta.titulo }}</h2>
+          <p>{{ pauta.descricao || 'Sem descrição' }}</p>
+          <div class="pauta-card-footer">
+            <time [attr.datetime]="pauta.criadaEm">{{ pauta.criadaEm | date: 'dd/MM/yyyy' }}</time
+            ><a
+              mat-button
+              [routerLink]="['/pautas', pauta.id]"
+              [queryParams]="{ pagina: pagina() }"
+              [attr.aria-label]="'Ver pauta: ' + pauta.titulo"
+              >Ver pauta<app-icon name="next"
+            /></a>
+          </div>
+        </article>
+      }
+    </div>
+  }
+  @if (!erro()) {
+    <nav class="pagination" aria-label="Paginação das pautas">
+      <button
+        mat-stroked-button
+        [disabled]="carregando() || pagina() === 0"
+        (click)="mudarPagina(-1)"
+      >
+        <app-icon name="back" />Anterior</button
+      ><span aria-live="polite">Página {{ pagina() + 1 }}</span
+      ><button
+        mat-stroked-button
+        [disabled]="carregando() || pautas().length < tamanho"
+        (click)="mudarPagina(1)"
+      >
+        Próxima<app-icon name="next" />
+      </button>
+    </nav>
+  }
+</main>

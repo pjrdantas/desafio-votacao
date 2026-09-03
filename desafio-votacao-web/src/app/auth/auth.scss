@@ -1,0 +1,38 @@
+.account-bar { background: #eef0ff; border-bottom: 1px solid #dde1f3; }
+.account-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 8px; }
+.account-cpf { margin-left: 12px; color: var(--muted); font-size: 12px; }
+.account-inner nav { display: flex; flex-wrap: wrap; }
+.account-error, .field-error { color: #b91c1c; }
+.login-page { min-height: 100dvh; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; max-width: 1120px; margin: auto; padding: 48px 32px; }
+.login-intro { max-width: 460px; }
+.login-intro .brand-mark { display: inline-flex; width: 56px; height: 56px; margin-bottom: 28px; }
+.login-intro h1 { font-family: 'DM Serif Display', serif; font-size: clamp(36px, 4vw, 54px); font-weight: 400; line-height: 1.15; margin: 16px 0 24px; }
+.login-intro > p:last-child { color: var(--muted); font-size: 17px; line-height: 1.7; }
+.login-card { padding: 36px; box-shadow: 0 12px 40px #18234809; }
+.login-card h2 { font-family: 'DM Serif Display', serif; font-size: 29px; font-weight: 400; margin: 0 0 8px; }
+.login-card form { display: grid; gap: 10px; margin-top: 28px; }
+.login-card mat-form-field { width: 100%; }
+.login-submit { width: 100%; margin-top: 8px; }
+.login-switch { text-align: center; margin: 24px 0 0; }
+.countdown { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0 0 24px; }
+.countdown strong { font-variant-numeric: tabular-nums; }
+.mobile-contract { max-width: 620px; }
+.mobile-contract-card { padding: 28px; margin-top: 16px; }
+.mobile-contract-card h1 { font-family: 'DM Serif Display', serif; font-size: 30px; font-weight: 400; margin-bottom: 24px; }
+.mobile-contract-card mat-form-field { width: 100%; }
+.mobile-options { display: grid; gap: 12px; }
+.mobile-options button { min-height: 44px; height: auto; white-space: normal; padding: 12px; }
+.mobile-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.mobile-value { display: flex; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--border); padding: 12px 0; margin: 0; }
+.mobile-value dt { color: var(--muted); }
+.mobile-value dd { margin: 0; font-weight: 600; }
+@media (max-width: 700px) {
+  .login-page { grid-template-columns: 1fr; gap: 24px; padding: 28px 20px; align-content: center; }
+  .login-intro .brand-mark { margin-bottom: 8px; width: 40px; height: 40px; }
+  .login-intro h1 { font-size: 34px; margin: 10px 0; }
+  .login-intro > p:last-child { font-size: 14px; margin: 12px 0 0; }
+  .login-card { padding: 24px; }
+  .account-inner { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .account-cpf { display: block; margin-left: 0; }
+  .account-inner nav { width: 100%; justify-content: flex-end; }
+}

@@ -1,0 +1,10 @@
+name: desafio-votacao-web
+services:
+  web:
+    build: .
+    ports:
+      - "127.0.0.1:${WEB_PORT:-4200}:80"
+    environment:
+      API_UPSTREAM: ${API_UPSTREAM:-host.docker.internal:8080}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

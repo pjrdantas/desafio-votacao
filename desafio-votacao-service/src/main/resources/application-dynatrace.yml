@@ -1,0 +1,24 @@
+spring:
+  main:
+    banner-mode: off
+management:
+  dynatrace:
+    metrics:
+      export:
+        enabled: true
+        uri: ${DYNATRACE_METRICS_URI}
+        api-token: ${DYNATRACE_API_TOKEN}
+        step: ${DYNATRACE_METRICS_STEP:30s}
+        connect-timeout: 2s
+        read-timeout: 5s
+        v2:
+          metric-key-prefix: desafio
+          enrich-with-dynatrace-metadata: true
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        application: ${spring.application.name}
+        environment: ${APP_ENV:local}

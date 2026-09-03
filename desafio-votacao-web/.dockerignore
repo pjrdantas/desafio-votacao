@@ -1,0 +1,12 @@
+# Arquivos necessários para construir a aplicação
+**
+!Dockerfile
+!package.json
+!package-lock.json
+!angular.json
+!tsconfig*.json
+!nginx.conf.template
+!src/
+!src/**
+!public/
+!public/**

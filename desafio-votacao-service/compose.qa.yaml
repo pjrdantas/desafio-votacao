@@ -1,0 +1,42 @@
+# Ambiente isolado para validação e carga. Não usa volumes de desenvolvimento.
+name: votacao-qa
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: votacao_qa
+      POSTGRES_USER: votacao_qa
+      POSTGRES_PASSWORD: votacao_qa_local
+    volumes:
+      - qa-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U votacao_qa -d votacao_qa"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:18080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/votacao_qa
+      DB_USERNAME: votacao_qa
+      DB_PASSWORD: votacao_qa_local
+      JWT_KEY_STORE_PATH: /app/keys/jwt.jwk
+      CPF_FAKE_MODO: apto
+      AUTH_RATE_LIMIT: 10000
+      MOBILE_BASE_URL: http://localhost:18080
+    volumes:
+      - qa-keys:/app/keys
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/actuator/health"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+volumes:
+  qa-data:
+  qa-keys:

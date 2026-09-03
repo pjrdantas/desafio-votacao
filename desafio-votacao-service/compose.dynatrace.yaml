@@ -1,0 +1,14 @@
+services:
+  app:
+    environment:
+      SPRING_PROFILES_ACTIVE: dynatrace
+      APP_ENV: ${APP_ENV:-local}
+      DYNATRACE_METRICS_URI: ${DYNATRACE_METRICS_URI:?Defina a URL completa da API v2 de ingestao de metricas}
+      DYNATRACE_API_TOKEN: ${DYNATRACE_API_TOKEN:?Defina um token com escopo metrics.ingest}
+      DYNATRACE_METRICS_STEP: ${DYNATRACE_METRICS_STEP:-30s}
+      DT_TAGS: primary_tags.application=desafio-votacao-service primary_tags.environment=${APP_ENV:-local}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

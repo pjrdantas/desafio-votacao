@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: desafio-votacao-service
+  web:
+    error:
+      include-message: never
+      include-stacktrace: never
+  jackson:
+    deserialization:
+      accept-float-as-int: false
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/votacao}
+    username: ${DB_USERNAME:votacao}
+    password: ${DB_PASSWORD:votacao}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+  flyway:
+    enabled: true
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+management:
+  dynatrace:
+    metrics:
+      export:
+        enabled: false
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${APP_ENV:local}
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db
+app:
+  security:
+    issuer: ${JWT_ISSUER:urn:desafio-votacao-service}
+    key-store-path: ${JWT_KEY_STORE_PATH:./.secrets/jwt.jwk}
+    access-duration: ${JWT_ACCESS_DURATION:10m}
+    refresh-duration: ${JWT_REFRESH_DURATION:8h}
+    cookie-secure: ${AUTH_COOKIE_SECURE:false}
+    auth-requests-per-minute: ${AUTH_RATE_LIMIT:120}
+  cpf-fake:
+    modo: ${CPF_FAKE_MODO:aleatorio}
+  mobile-base-url: ${MOBILE_BASE_URL:http://localhost:8080}
+logging:
+  pattern:
+    level: '%5p [correlationId=%X{correlationId:-none}]'
+springdoc:
+  packages-to-scan: br.com.sicredi.desafiovotacao.adapter.in.web
+  override-with-generic-response: false
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    filter: true

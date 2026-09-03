@@ -1,0 +1,6 @@
+services:
+  app:
+    build:
+      target: dynatrace
+      args:
+        DT_ONEAGENT_IMAGE: ${DT_ONEAGENT_IMAGE:?Defina a imagem oneagent-codemodules-musl Java do seu ambiente}

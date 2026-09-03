@@ -1,0 +1,76 @@
+# Diretórios locais e metadados de ferramentas
+**/.*/
+!**/.github/
+!**/.github/**
+!**/.mvn/
+!**/.mvn/**
+**/.classpath
+**/.project
+**/.factorypath
+*.iml
+*.launch
+
+# Dependências e arquivos compilados
+**/target/
+**/node_modules/
+**/dist/
+/bin/
+/out/
+**/out-tsc/
+**/bazel-out/
+**/coverage/
+*.class
+
+# Configurações e chaves locais
+.env
+.env.*
+!.env.example
+*.jwk
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs, relatórios e arquivos temporários
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+hs_err_pid*
+**/tmp/
+**/test-results/
+**/playwright-report/
+**/allure-results/
+**/__screenshots__/
+
+# Documentos de trabalho e arquivos compactados
+**/docs/
+*.md
+*.mdx
+*.txt
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.zip
+*.7z
+*.rar
+!README.md
+!README-original.md
+!**/README.md
+!**/README-original.md
+
+!LICENSE
+!LICENSE.*
+!**/LICENSE
+!**/LICENSE.*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini

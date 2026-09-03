@@ -1,0 +1,101 @@
+<header class="page-header">
+  <div class="container header-inner detail-header">
+    <a
+      mat-icon-button
+      routerLink="/pautas"
+      [queryParams]="{ pagina: paginaAnterior }"
+      aria-label="Voltar para pautas"
+      ><app-icon name="back" /></a
+    ><span class="header-caption">Pautas da assembleia</span>
+    @if (resultado(); as r) {
+      @if (!erroResultado()) {
+        <app-status-badge [status]="r.situacao" />
+      }
+    }
+  </div>
+</header>
+<main id="conteudo" class="container main-content" tabindex="-1">
+  @if (carregando()) {
+    <div class="loading-state" role="status">
+      <mat-spinner diameter="24" /><span>Carregando pauta…</span>
+    </div>
+  } @else if (erro(); as falha) {
+    <app-error-notice
+      title="Não foi possível carregar a pauta"
+      [error]="falha"
+      [retryable]="falha.status !== 404"
+      (retry)="carregar()"
+    /><a mat-button routerLink="/pautas">Voltar para pautas</a>
+  } @else if (pauta(); as p) {
+    <div class="detail-intro">
+      <h1>{{ p.titulo }}</h1>
+      <p class="created-at">Criada em {{ p.criadaEm | date: "dd 'de' MMMM 'de' yyyy, HH:mm" }}</p>
+      @if (p.descricao) {
+        <p class="description">{{ p.descricao }}</p>
+      }
+    </div>
+    <div class="pauta-actions">
+      @if (erroResultado()) {
+        <p class="muted">
+          Ações indisponíveis enquanto a situação da pauta não puder ser verificada.
+        </p>
+      } @else if (resultado(); as r) {
+        @switch (r.situacao) {
+          @case ('NAO_ABERTA') {
+            <button mat-flat-button [disabled]="carregandoResultado()" (click)="abrirSessao()">
+              <app-icon name="play" />Abrir sessão
+            </button>
+          }
+          @case ('ABERTA') {
+            <button mat-flat-button [disabled]="carregandoResultado() || segundosRestantes() === 0" (click)="registrarVoto()">
+              <app-icon name="check" />Registrar voto
+            </button>
+          }
+          @case ('ENCERRADA') {
+            <p class="closed-note"><app-icon name="lock" />Votação encerrada</p>
+          }
+        }
+      }
+    </div>
+    @if (resultado()?.situacao === 'ABERTA' && segundosRestantes() !== null) {
+      <p class="countdown"><app-icon name="clock" />Tempo restante: <strong>{{ contagem() }}</strong><span class="muted">Apuração atualizada automaticamente.</span></p>
+    }
+    <div class="detail-grid">
+      <app-resultado-card
+        [resultado]="resultado()"
+        [carregando]="carregandoResultado()"
+        [erro]="erroResultado()"
+        (atualizar)="atualizar()"
+      />
+      <aside>
+        <section class="card info-card">
+          <h2 class="eyebrow">Informações</h2>
+          <dl>
+            <div>
+              <dt>Situação</dt>
+              <dd>
+                @if (erroResultado()) {
+                  <span class="muted">Situação indisponível</span>
+                } @else if (resultado(); as r) {
+                  <app-status-badge [status]="r.situacao" />
+                } @else {
+                  <span class="muted">Consultando…</span>
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Criada em</dt>
+              <dd>{{ p.criadaEm | date: "dd 'de' MMMM 'de' yyyy, HH:mm" }}</dd>
+            </div>
+          </dl>
+        </section>
+        <div class="notice info">
+          <p>
+            Cada associado pode votar uma única vez nesta pauta. A votação encerra automaticamente
+            ao fim da sessão.
+          </p>
+        </div>
+      </aside>
+    </div>
+  }
+</main>

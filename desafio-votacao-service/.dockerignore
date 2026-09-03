@@ -1,0 +1,6 @@
+# Arquivos necessários para construir a aplicação
+**
+!Dockerfile
+!pom.xml
+!src/
+!src/**
