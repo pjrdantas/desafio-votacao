@@ -25,6 +25,7 @@ run "plano_padrao" {
   variables {
     api_origin_domain = "api.us-east-2.elb.amazonaws.com"
     origin_token      = "0123456789abcdef0123456789abcdef"
+    hosting_mode      = "cloudfront"
   }
 
   assert {
@@ -72,5 +73,10 @@ run "fallback_lambda_url" {
   assert {
     condition     = length(aws_lambda_function_url.web) == 1
     error_message = "O fallback deve publicar uma URL HTTPS da Lambda."
+  }
+
+  assert {
+    condition     = aws_lambda_function.web[0].reserved_concurrent_executions == 5
+    error_message = "O fallback deve preservar cinco execuções livres na cota inicial da conta."
   }
 }
