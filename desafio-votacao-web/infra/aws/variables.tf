@@ -26,6 +26,28 @@ variable "api_origin_domain" {
   }
 }
 
+variable "origin_token" {
+  description = "Token privado retornado pelo Terraform do backend."
+  type        = string
+  sensitive   = true
+
+  validation {
+    condition     = length(var.origin_token) >= 32
+    error_message = "origin_token deve ter pelo menos 32 caracteres."
+  }
+}
+
+variable "hosting_mode" {
+  description = "Endpoint HTTPS público: cloudfront ou lambda_url."
+  type        = string
+  default     = "cloudfront"
+
+  validation {
+    condition     = contains(["cloudfront", "lambda_url"], var.hosting_mode)
+    error_message = "hosting_mode deve ser cloudfront ou lambda_url."
+  }
+}
+
 variable "force_destroy" {
   description = "Permite apagar o bucket mesmo com arquivos."
   type        = bool

@@ -1,6 +1,10 @@
 aws_region       = "us-east-2"
 environment      = "demo"
 api_origin_domain = "desafio-votacao-demo-api-000000000.us-east-2.elb.amazonaws.com"
+origin_token      = "TOKEN_SENSIVEL_RETORNADO_PELO_BACKEND"
 
 # PriceClass_All utiliza também pontos de presença no Brasil.
 price_class = "PriceClass_All"
+
+# Use lambda_url quando uma conta nova ainda não estiver liberada para CloudFront.
+# hosting_mode = "lambda_url"

@@ -4,8 +4,14 @@ output "api_origin_domain" {
 }
 
 output "api_url" {
-  description = "URL direta da API."
+  description = "URL do origin. O listener exige o cabeçalho privado X-Origin-Token."
   value       = "http://${aws_lb.api.dns_name}"
+}
+
+output "origin_token" {
+  description = "Token privado compartilhado com o proxy HTTPS do frontend."
+  value       = random_password.origin_token.result
+  sensitive   = true
 }
 
 output "ecr_repository_url" {

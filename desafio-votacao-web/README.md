@@ -129,22 +129,22 @@ src/app/
 
 ## Implantação na AWS
 
-A infraestrutura em `infra/aws` cria um bucket S3 privado, uma distribuição CloudFront e um AWS WAF com rate limit global para os endpoints de autenticação. O conteúdo Angular é servido por HTTPS e os caminhos `/api`, `/swagger-ui`, `/v3/api-docs` e `/actuator/health` são encaminhados ao ALB do backend. Assim, frontend, cookies e API usam a mesma origem pública.
+A infraestrutura em `infra/aws` cria um bucket S3 privado e publica frontend e API na mesma origem HTTPS. O modo padrão usa CloudFront e AWS WAF, com rate limit global para autenticação. Se uma conta nova ainda não estiver liberada para CloudFront, o modo `lambda_url` usa uma Lambda Function URL como endpoint HTTPS temporário. Nos dois modos, o proxy entrega o Angular e encaminha `/api`, `/swagger-ui`, `/v3/api-docs` e `/actuator/health` ao ALB com um token privado.
 
-Depois de implantar o backend, use o output `api_origin_domain`:
+Depois de implantar o backend, use os outputs `api_origin_domain` e `origin_token`:
 
 ```powershell
 cd infra/aws
 Copy-Item terraform.tfvars.example terraform.tfvars
-.\deploy.ps1 -ApiOriginDomain "DOMINIO_DO_ALB"
+.\deploy.ps1 -ApiOriginDomain "DOMINIO_DO_ALB" -OriginToken "TOKEN_DO_ORIGIN"
 ```
 
-O script instala as dependências, testa, gera o build, aplica o Terraform, sincroniza o S3 e invalida o cache. O output `application_url` é o endereço público da aplicação. Depois, atualize `public_base_url` no Terraform do backend com essa URL para que os callbacks do contrato mobile também usem HTTPS.
+Para uma conta que retorne a mensagem de verificação obrigatória ao criar CloudFront, acrescente `-HostingMode lambda_url`. O script instala as dependências, testa, gera o build, aplica o Terraform e sincroniza o S3. No modo CloudFront, também invalida o cache. O output `application_url` é o endereço público da aplicação. Depois, atualize `public_base_url` no Terraform do backend com essa URL para que os callbacks do contrato mobile também usem HTTPS.
 
 Para remover os recursos:
 
 ```powershell
-terraform destroy -var="api_origin_domain=DOMINIO_DO_ALB"
+terraform destroy
 ```
 
 O workflow `.github/workflows/deploy-aws.yml` publica um novo build mediante acionamento manual. Configure `AWS_ROLE_ARN`, `AWS_REGION`, `WEB_BUCKET` e `CLOUDFRONT_DISTRIBUTION` como variáveis do repositório. A autenticação com a AWS usa OIDC.

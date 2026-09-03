@@ -240,9 +240,9 @@ Copy-Item terraform.tfvars.example terraform.tfvars
 .\deploy.ps1
 ```
 
-O Terraform mostra o plano antes de cada aplicação. Ao final, copie o output `api_origin_domain`; ele será usado na implantação do frontend. O ALB aceita tráfego do CloudFront por padrão. Para um diagnóstico direto e temporário, informe seu IP em `api_allowed_cidrs`.
+O Terraform mostra o plano antes de cada aplicação. Ao final, copie os outputs `api_origin_domain` e `origin_token`; eles configuram o proxy HTTPS do frontend. O token é sensível, gerado aleatoriamente e não deve ser versionado. O listener do ALB devolve 403 quando o cabeçalho privado do proxy não confere.
 
-O ambiente de demonstração evita o custo de um NAT Gateway: as tarefas recebem IP público, mas aceitam entrada somente do ALB; o ALB, por sua vez, aceita as origens do CloudFront. PostgreSQL e EFS permanecem em sub-redes sem rota pública. Em um ambiente permanente, use sub-redes privadas com VPC endpoints ou NAT, TLS também entre CloudFront e ALB, `database_multi_az=true`, `protect_data=true` e estado remoto criptografado do Terraform.
+O ambiente de demonstração evita o custo de um NAT Gateway: as tarefas recebem IP público, mas aceitam entrada somente do ALB; o ALB encaminha ao target apenas as chamadas autenticadas pelo proxy HTTPS. PostgreSQL e EFS permanecem em sub-redes sem rota pública. Em um ambiente permanente, use sub-redes privadas com VPC endpoints ou NAT, TLS também entre o proxy e o ALB, `database_multi_az=true`, `protect_data=true` e estado remoto criptografado do Terraform.
 
 Para remover os recursos de demonstração:
 

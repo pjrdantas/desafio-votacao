@@ -1,8 +1,10 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  name        = "${var.project_name}-${var.environment}"
-  bucket_name = "${local.name}-web-${data.aws_caller_identity.current.account_id}"
+  name               = "${var.project_name}-${var.environment}"
+  bucket_name        = "${local.name}-web-${data.aws_caller_identity.current.account_id}"
+  cloudfront_enabled = var.hosting_mode == "cloudfront"
+  lambda_enabled     = var.hosting_mode == "lambda_url"
 }
 
 resource "aws_s3_bucket" "web" {
@@ -163,7 +165,7 @@ resource "aws_cloudfront_function" "spa" {
 
 resource "aws_wafv2_web_acl" "web" {
   provider = aws.global
-  count    = var.enable_waf ? 1 : 0
+  count    = local.cloudfront_enabled && var.enable_waf ? 1 : 0
 
   name  = "${local.name}-web"
   scope = "CLOUDFRONT"
@@ -218,6 +220,7 @@ resource "aws_wafv2_web_acl" "web" {
   }
 }
 resource "aws_cloudfront_distribution" "web" {
+  count               = local.cloudfront_enabled ? 1 : 0
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
@@ -235,6 +238,11 @@ resource "aws_cloudfront_distribution" "web" {
   origin {
     domain_name = var.api_origin_domain
     origin_id   = "api"
+
+    custom_header {
+      name  = "X-Origin-Token"
+      value = var.origin_token
+    }
 
     custom_origin_config {
       http_port              = 80
@@ -288,6 +296,7 @@ resource "aws_cloudfront_distribution" "web" {
 }
 
 resource "aws_s3_bucket_policy" "web" {
+  count  = local.cloudfront_enabled ? 1 : 0
   bucket = aws_s3_bucket.web.id
   policy = jsonencode({
     Version = "2012-10-17"
@@ -299,9 +308,100 @@ resource "aws_s3_bucket_policy" "web" {
       Resource  = "${aws_s3_bucket.web.arn}/*"
       Condition = {
         StringEquals = {
-          "AWS:SourceArn" = aws_cloudfront_distribution.web.arn
+          "AWS:SourceArn" = aws_cloudfront_distribution.web[0].arn
         }
       }
     }]
   })
+}
+
+data "archive_file" "lambda_web" {
+  count       = local.lambda_enabled ? 1 : 0
+  type        = "zip"
+  source_file = "${path.module}/lambda/index.mjs"
+  output_path = "${path.module}/.terraform/lambda-web.zip"
+}
+
+resource "aws_iam_role" "lambda_web" {
+  count = local.lambda_enabled ? 1 : 0
+  name  = "${local.name}-web-proxy"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_logs" {
+  count      = local.lambda_enabled ? 1 : 0
+  role       = aws_iam_role.lambda_web[0].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "lambda_s3" {
+  count = local.lambda_enabled ? 1 : 0
+  name  = "read-private-web-bucket"
+  role  = aws_iam_role.lambda_web[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["s3:GetObject"]
+      Resource = "${aws_s3_bucket.web.arn}/*"
+    }]
+  })
+}
+
+resource "aws_lambda_function" "web" {
+  count                          = local.lambda_enabled ? 1 : 0
+  function_name                  = "${local.name}-web"
+  role                           = aws_iam_role.lambda_web[0].arn
+  handler                        = "index.handler"
+  runtime                        = "nodejs22.x"
+  architectures                  = ["arm64"]
+  filename                       = data.archive_file.lambda_web[0].output_path
+  source_code_hash               = data.archive_file.lambda_web[0].output_base64sha256
+  memory_size                    = 256
+  timeout                        = 29
+  reserved_concurrent_executions = 10
+
+  environment {
+    variables = {
+      API_ORIGIN_DOMAIN = var.api_origin_domain
+      ORIGIN_TOKEN      = var.origin_token
+      WEB_BUCKET        = aws_s3_bucket.web.id
+    }
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.lambda_logs]
+}
+
+resource "aws_lambda_function_url" "web" {
+  count              = local.lambda_enabled ? 1 : 0
+  function_name      = aws_lambda_function.web[0].function_name
+  authorization_type = "NONE"
+  invoke_mode        = "BUFFERED"
+}
+
+resource "aws_lambda_permission" "public_function_url" {
+  count                  = local.lambda_enabled ? 1 : 0
+  statement_id           = "AllowPublicFunctionUrl"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = aws_lambda_function.web[0].function_name
+  principal              = "*"
+  function_url_auth_type = "NONE"
+}
+
+resource "aws_lambda_permission" "public_invoke" {
+  count                    = local.lambda_enabled ? 1 : 0
+  statement_id             = "AllowPublicInvokeViaFunctionUrl"
+  action                   = "lambda:InvokeFunction"
+  function_name            = aws_lambda_function.web[0].function_name
+  principal                = "*"
+  invoked_via_function_url = true
 }

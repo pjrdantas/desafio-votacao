@@ -48,8 +48,11 @@ A opção AWS utiliza serviços gerenciados e mantém os projetos independentes:
 ```mermaid
 flowchart LR
     U[Usuário] --> C[CloudFront HTTPS + WAF]
+    U --> H[Lambda Function URL HTTPS]
     C --> S[S3 privado - Angular]
+    H --> S
     C --> A[Application Load Balancer]
+    H --> A
     A --> E[ECS Fargate - Spring Boot]
     E --> R[(RDS PostgreSQL)]
     E --> F[EFS - chave JWT]
@@ -62,10 +65,12 @@ flowchart LR
 A AWS oferece uma rota direta do Docker local para containers gerenciados, banco PostgreSQL privado, CDN e observabilidade sem exigir um cluster Kubernetes para uma única API. Os manifests Terraform ficam dentro de cada projeto:
 
 1. Execute `desafio-votacao-service/infra/aws/deploy.ps1` para criar e publicar o backend.
-2. Copie o output `api_origin_domain`.
-3. Execute `desafio-votacao-web/infra/aws/deploy.ps1 -ApiOriginDomain "DOMINIO_DO_ALB"`.
+2. Copie os outputs `api_origin_domain` e `origin_token`; o segundo é sensível e autentica o proxy no ALB.
+3. Execute `desafio-votacao-web/infra/aws/deploy.ps1 -ApiOriginDomain "DOMINIO_DO_ALB" -OriginToken "TOKEN_DO_ORIGIN"`.
 4. Use o output `application_url` como endereço público HTTPS.
-5. Atualize `public_base_url` do backend com a URL do CloudFront antes da apresentação do fluxo mobile.
+5. Atualize `public_base_url` do backend com a URL pública antes da apresentação do fluxo mobile.
+
+O modo padrão usa CloudFront e WAF. Contas novas que ainda aguardam a liberação do CloudFront podem acrescentar `-HostingMode lambda_url`; nesse modo, uma Lambda Function URL entrega o mesmo bucket privado e encaminha a API pelo token do origin.
 
 A infraestrutura gera custos enquanto estiver ativa. Os READMEs dos projetos detalham variáveis, CI/CD, limitações do ambiente de demonstração e remoção dos recursos.
 

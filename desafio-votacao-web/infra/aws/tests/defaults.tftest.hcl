@@ -10,11 +10,21 @@ mock_provider "aws" {
   alias = "global"
 }
 
+mock_provider "archive" {
+  mock_data "archive_file" {
+    defaults = {
+      output_path         = ".terraform/lambda-web.zip"
+      output_base64sha256 = "bW9jay1zaGEyNTY="
+    }
+  }
+}
+
 run "plano_padrao" {
   command = plan
 
   variables {
     api_origin_domain = "api.us-east-2.elb.amazonaws.com"
+    origin_token      = "0123456789abcdef0123456789abcdef"
   }
 
   assert {
@@ -35,7 +45,32 @@ run "plano_padrao" {
   }
 
   assert {
-    condition     = aws_cloudfront_distribution.web.viewer_certificate[0].minimum_protocol_version == "TLSv1.2_2021"
+    condition     = aws_cloudfront_distribution.web[0].viewer_certificate[0].minimum_protocol_version == "TLSv1.2_2021"
     error_message = "O CloudFront deve exigir TLS moderno."
+  }
+}
+
+run "fallback_lambda_url" {
+  command = plan
+
+  variables {
+    api_origin_domain = "api.us-east-2.elb.amazonaws.com"
+    origin_token      = "0123456789abcdef0123456789abcdef"
+    hosting_mode      = "lambda_url"
+  }
+
+  assert {
+    condition     = length(aws_cloudfront_distribution.web) == 0
+    error_message = "O fallback não deve tentar criar CloudFront em conta sem verificação."
+  }
+
+  assert {
+    condition     = length(aws_wafv2_web_acl.web) == 0
+    error_message = "O fallback não deve manter um WAF sem associação."
+  }
+
+  assert {
+    condition     = length(aws_lambda_function_url.web) == 1
+    error_message = "O fallback deve publicar uma URL HTTPS da Lambda."
   }
 }

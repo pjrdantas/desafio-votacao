@@ -17,6 +17,11 @@ locals {
   ])
 }
 
+resource "random_password" "origin_token" {
+  length  = 48
+  special = false
+}
+
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
@@ -88,6 +93,15 @@ resource "aws_vpc_security_group_ingress_rule" "alb_cloudfront" {
   from_port         = 80
   to_port           = 80
   prefix_list_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "alb_https_proxy" {
+  security_group_id = aws_security_group.alb.id
+  description       = "HTTP protegido pelo token do proxy HTTPS"
+  ip_protocol       = "tcp"
+  from_port         = 80
+  to_port           = 80
+  cidr_ipv4         = "0.0.0.0/0"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "alb_diagnostic" {
@@ -345,8 +359,30 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "application/json"
+      message_body = "{\"status\":403,\"detail\":\"Origem nao autorizada\"}"
+      status_code  = "403"
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "origin_authenticated" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 100
+
+  action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.api.arn
+  }
+
+  condition {
+    http_header {
+      http_header_name = "X-Origin-Token"
+      values           = [random_password.origin_token.result]
+    }
   }
 }
 
