@@ -94,7 +94,7 @@ resource "aws_vpc_security_group_ingress_rule" "alb_diagnostic" {
   for_each = toset(var.api_allowed_cidrs)
 
   security_group_id = aws_security_group.alb.id
-  description       = "Acesso HTTP temporário para diagnóstico"
+  description       = "Acesso HTTP temporario para diagnostico"
   ip_protocol       = "tcp"
   from_port         = 80
   to_port           = 80
@@ -106,7 +106,7 @@ resource "aws_security_group" "service" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description     = "Aplicação a partir do ALB"
+    description     = "Aplicacao a partir do ALB"
     from_port       = 8080
     to_port         = 8080
     protocol        = "tcp"
