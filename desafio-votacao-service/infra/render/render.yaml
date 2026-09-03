@@ -10,7 +10,6 @@ services:
     dockerContext: .
     autoDeployTrigger: commit
     healthCheckPath: /actuator/health/readiness
-    maxShutdownDelaySeconds: 30
     envVars:
       - key: SERVER_PORT
         value: "10000"
