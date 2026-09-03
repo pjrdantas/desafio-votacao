@@ -24,6 +24,11 @@ run "plano_padrao" {
   }
 
   assert {
+    condition     = aws_db_instance.postgres.backup_retention_period == 1
+    error_message = "A retenção de backup deve respeitar o limite da conta gratuita."
+  }
+
+  assert {
     condition     = aws_ecs_task_definition.app.cpu == "512"
     error_message = "A tarefa deve iniciar com 0,5 vCPU."
   }

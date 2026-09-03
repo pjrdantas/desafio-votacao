@@ -171,7 +171,7 @@ resource "aws_db_instance" "postgres" {
   publicly_accessible         = false
   db_subnet_group_name        = aws_db_subnet_group.postgres.name
   vpc_security_group_ids      = [aws_security_group.database.id]
-  backup_retention_period     = 7
+  backup_retention_period     = 1
   deletion_protection         = var.protect_data
   skip_final_snapshot         = !var.protect_data
   apply_immediately           = true
