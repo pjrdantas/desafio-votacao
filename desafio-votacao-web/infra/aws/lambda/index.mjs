@@ -49,7 +49,11 @@ function response(statusCode, headers, body, cookies = []) {
 }
 
 function isBackendPath(path) {
-  return backendPrefixes.some(prefix => path === prefix || path.startsWith(prefix + "/"));
+  return backendPrefixes.some(prefix =>
+    path === prefix ||
+    path.startsWith(prefix + "/") ||
+    (prefix === "/swagger-ui" && path.startsWith(prefix))
+  );
 }
 
 function contentType(key) {
@@ -125,7 +129,11 @@ async function staticFile(path) {
       ...(object.ETag ? { etag: object.ETag } : {})
     }, bytes);
   } catch (error) {
-    if (error?.name === "NoSuchKey" || error?.$metadata?.httpStatusCode === 404) {
+    if (
+      error?.name === "NoSuchKey" ||
+      error?.$metadata?.httpStatusCode === 403 ||
+      error?.$metadata?.httpStatusCode === 404
+    ) {
       return response(404, { "content-type": "text/plain; charset=utf-8" }, "Arquivo não encontrado");
     }
     throw error;
