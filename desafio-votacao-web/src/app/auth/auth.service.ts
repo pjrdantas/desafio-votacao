@@ -25,10 +25,10 @@ export class AuthService {
       { headers: { [csrf.headerName]: csrf.token }, timeout: 15000 })));
   }
   entrar(cpf: string, senha: string) {
-    return this.post<TokenResponse>('login', { cpf, senha }).pipe(tap(response => { this.geracao++; this.aceitar(response); }));
+    return this.post<TokenResponse>('login', { cpf: this.normalizarCpf(cpf), senha }).pipe(tap(response => { this.geracao++; this.aceitar(response); }));
   }
   cadastrar(nome: string, cpf: string, senha: string) {
-    return this.post<Usuario>('cadastro', { nome, cpf, senha });
+    return this.post<Usuario>('cadastro', { nome, cpf: this.normalizarCpf(cpf), senha });
   }
   renovar(): Observable<TokenResponse> {
     if (!this.renovacao) {
@@ -69,5 +69,6 @@ export class AuthService {
     this.expiraEm = Date.now() + Math.max(0, response.expiresIn - 10) * 1000;
     this.usuario.set(response.usuario);
   }
+  private normalizarCpf(cpf: string) { return cpf.replace(/\D/g, ''); }
   private limpar() { this.geracao++; this.token = null; this.expiraEm = 0; this.usuario.set(null); }
 }

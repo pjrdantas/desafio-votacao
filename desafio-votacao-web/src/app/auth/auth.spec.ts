@@ -51,6 +51,13 @@ describe('Sessão e autorização HTTP', () => {
     expect(externo.request.headers.has('Authorization')).toBe(false); externo.flush({});
     expect(storage).not.toHaveBeenCalled(); storage.mockRestore();
   });
+  it('remove a máscara do CPF antes de enviá-lo ao login', () => {
+    auth.entrar('529.982.247-25','senha-segura').subscribe();
+    csrf();
+    const req=http.expectOne('/api/v1/auth/login');
+    expect(req.request.body).toEqual({cpf:'52998224725',senha:'senha-segura'});
+    req.flush({accessToken:'jwt-original',tokenType:'Bearer',expiresIn:600,usuario:perfil});
+  });
   it('após 401 renova uma vez e repete com o novo JWT', async () => {
     logar();
     client.get('/api/v1/pautas').subscribe();
